@@ -16,7 +16,7 @@ vars.AddVariables(
     BoolVariable('fsan', 'Enable fuzzer sanitizer?', False),
     BoolVariable('cov', 'Enable code coverage?', False),
     EnumVariable('variant', 'Build variant', default='release', allowed_values=('debug', 'release'), ignorecase=2),
-    EnumVariable('transport', 'Transport protocol', default='udp', allowed_values=('udp', 'tcp', 'dtls', 'fuzzer'), ignorecase=2),
+    EnumVariable('transport', 'Transport protocol', default='udp', allowed_values=('udp', 'tcp', 'dtls', 'pipe', 'fuzzer'), ignorecase=2),
     EnumVariable('target', 'Build target', default='local', allowed_values=('local', 'yocto'), ignorecase=2),
     ListVariable('bindings', 'Bindings to build', bindings, bindings),
     PathVariable('application', 'Application to build', '', PathVariable.PathAccept),
@@ -31,6 +31,7 @@ if platform.system() == 'Windows':
         PathVariable('PYTHON_PATH', 'Path to Python', 'C:\Python27', PathVariable.PathAccept),
         PathVariable('UV_PATH', 'Path where libuv is installed', 'ext\libuv', PathVariable.PathAccept),
         PathVariable('SWIG', 'Path to SWIG executable', 'C:\swigwin-3.0.10\swig.exe', PathVariable.PathAccept),
+        PathVariable('NASM_PATH', 'Path to where NASM is installed', 'C:\Program Files\NASM', PathVariable.PathAccept),
         PathVariable('DEF_FILE', 'Path to external defs for dll', 'dps_shared.def', PathVariable.PathIsFile))
 
 tools = GetOption('tools')
@@ -71,6 +72,9 @@ elif env['transport'] == 'tcp':
 elif env['transport'] == 'dtls':
     env['USE_DTLS'] = 'true'
     env.Append(CPPDEFINES = ['DPS_USE_DTLS'])
+elif env['transport'] == 'pipe':
+    env['USE_PIPE'] = 'true'
+    env.Append(CPPDEFINES = ['DPS_USE_PIPE'])
 
 print("Building for " + env['variant'])
 
@@ -78,6 +82,7 @@ print("Building for " + env['variant'])
 
 if env['PLATFORM'] == 'win32':
     env.AppendENVPath('PATH', env['GIT_PATH'] + '\cmd')
+    env.AppendENVPath('PATH', env['NASM_PATH'])
 
     env.Append(CPPDEFINES = ['WIN32_LEAN_AND_MEAN', '_WIN32_WINNT=0x0600'])
     # We are getting our secure memory and string functions from
@@ -106,7 +111,8 @@ elif env['PLATFORM'] == 'posix':
     if env['target'] == 'yocto':
         env['PY_CPPPATH'] = [os.getenv('SYSROOT') + '/usr/include/python2.7']
     else:
-        env['PY_CPPPATH'] = ['/usr/include/python2.7']
+        py_cpppath = os.popen('python-config --includes').read().split()
+        env['PY_CPPPATH'] = map(lambda inc: inc[2:], py_cpppath)
     env['PY_LIBPATH'] = []
 
     env['DPS_LIBS'] = ['pthread']
@@ -142,6 +148,10 @@ if env['CC'] == 'cl':
 else:
     # uncomment to test for C90 (with gnu extensions) compatibility
     #env.Append(CCFLAGS = ['-std=gnu90'])
+
+    if 'clang' in env['CC']:
+        # clang complains about the CBOR_SIZEOF_UINT() macro when the arg is a uint8_t
+        env.Append(CCFLAGS = ['-Wno-tautological-constant-out-of-range-compare'])
 
     # Enable address sanitizer
     if env['asan'] == True:
@@ -199,8 +209,7 @@ else:
     # Fortify source:
     env.Append(CPPDEFINES = ['_FORTIFY_SOURCE=2'])
 
-    # gcc option -mmsse4.2 is to enble generation of popcountq instruction
-    env.Append(CCFLAGS = ['-ggdb', '-msse4.2'])
+    env.Append(CCFLAGS = ['-ggdb', '-march=native'])
 
     if env['profile'] == True:
         env.Append(CCFLAGS = ['-pg'])
@@ -262,6 +271,9 @@ if extUV:
     objs, shobjs = env.SConscript('ext/SConscript.libuv', exports=['env'])
     ext_objs.append(objs)
     ext_shobjs.append(shobjs)
+objs, shobjs = env.SConscript('ext/SConscript.intel-ipsec-mb', exports=['env'])
+ext_objs.append(objs)
+ext_shobjs.append(shobjs)
 
 version = '0.9.0'
 
