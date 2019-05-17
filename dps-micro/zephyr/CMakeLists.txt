@@ -6,74 +6,46 @@ project(dps_app)
 include(ExternalProject)
 find_package(Git REQUIRED)
 
-set(ext_dir ${CMAKE_CURRENT_SOURCE_DIR}/../ext)
-set(mbedtls_dir ${ext_dir}/mbedtls)
+set(dps_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 
-if(NOT EXISTS ${mbedtls_dir})
-    execute_process(COMMAND ${GIT_EXECUTABLE} clone https://github.com/ARMmbed/mbedtls.git ${mbedtls_dir})
-    execute_process(COMMAND ${GIT_EXECUTABLE} -C ${mbedtls_dir} checkout tags/mbedtls-2.8.0)
-endif()
-
-add_compile_definitions(MBEDTLS_USER_CONFIG_FILE="${ext_dir}/mbedtls_config_zephyr.h")
-
-include_directories("../include")
-include_directories("${mbedtls_dir}/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../include")
 
 add_compile_definitions(DPS_DEBUG=1)
 add_compile_definitions(DPS_TARGET=DPS_TARGET_ZEPHYR)
 
-set(mbedtls_sources
-    ${mbedtls_dir}/library/aes.c
-    ${mbedtls_dir}/library/aesni.c
-    ${mbedtls_dir}/library/asn1write.c
-    ${mbedtls_dir}/library/asn1parse.c
-    ${mbedtls_dir}/library/base64.c
-    ${mbedtls_dir}/library/bignum.c
-    ${mbedtls_dir}/library/cipher.c
-    ${mbedtls_dir}/library/cipher_wrap.c
-    ${mbedtls_dir}/library/ctr_drbg.c
-    ${mbedtls_dir}/library/debug.c
-    ${mbedtls_dir}/library/ecdh.c
-    ${mbedtls_dir}/library/ecdsa.c
-    ${mbedtls_dir}/library/ecp.c
-    ${mbedtls_dir}/library/ecp_curves.c
-    ${mbedtls_dir}/library/entropy.c
-    ${mbedtls_dir}/library/entropy_poll.c
-    ${mbedtls_dir}/library/error.c
-    ${mbedtls_dir}/library/gcm.c
-    ${mbedtls_dir}/library/hmac_drbg.c
-    ${mbedtls_dir}/library/md.c
-    ${mbedtls_dir}/library/md_wrap.c
-    ${mbedtls_dir}/library/md5.c
-    ${mbedtls_dir}/library/oid.c
-    ${mbedtls_dir}/library/pem.c
-    ${mbedtls_dir}/library/pk.c
-    ${mbedtls_dir}/library/pk_wrap.c
-    ${mbedtls_dir}/library/pkparse.c
-    ${mbedtls_dir}/library/platform.c
-    ${mbedtls_dir}/library/sha256.c
-    ${mbedtls_dir}/library/sha512.c
-    ${mbedtls_dir}/library/timing.c
-    ${mbedtls_dir}/library/x509.c
-    ${mbedtls_dir}/library/x509_crt.c
-    ${mbedtls_dir}/library/ssl_cache.c
-    ${mbedtls_dir}/library/ssl_ciphersuites.c
-    ${mbedtls_dir}/library/ssl_cli.c
-    ${mbedtls_dir}/library/ssl_cookie.c
-    ${mbedtls_dir}/library/ssl_srv.c
-    ${mbedtls_dir}/library/ssl_tls.c
+set(dps_sources
+    ${dps_src_dir}/ack.c
+    ${dps_src_dir}/bitvec.c
+    ${dps_src_dir}/cbor.c
+    ${dps_src_dir}/coap.c
+    ${dps_src_dir}/cose.c
+    ${dps_src_dir}/dps.c
+    ${dps_src_dir}/ec.c
+    ${dps_src_dir}/err.c
+    ${dps_src_dir}/gcm.c
+    ${dps_src_dir}/hkdf.c
+    ${dps_src_dir}/io_buf.c
+    ${dps_src_dir}/keystore.c
+    ${dps_src_dir}/keywrap.c
+    ${dps_src_dir}/mbedtls.c
+    ${dps_src_dir}/pub.c
+    ${dps_src_dir}/sha2.c
+    ${dps_src_dir}/sub.c
+    ${dps_src_dir}/topics.c
+    ${dps_src_dir}/uuid.c
+    ${dps_src_dir}/zephyr/dbg.c
+    ${dps_src_dir}/zephyr/entropy.c
+    ${dps_src_dir}/zephyr/malloc.c
+    ${dps_src_dir}/zephyr/network.c
+    ${dps_src_dir}/zephyr/timer.c
 )
 
-FILE(GLOB dps_sources "../src/*.c")
-
-target_sources(app PRIVATE "../src/zephyr/network.c")
-target_sources(app PRIVATE "../src/zephyr/dbg.c")
-target_sources(app PRIVATE "../src/zephyr/entropy.c")
-target_sources(app PRIVATE "../src/zephyr/malloc.c")
 target_sources(app PRIVATE ${dps_sources})
-target_sources(app PRIVATE ${mbedtls_sources})
 
 # The application to build
 include_directories("../test")
 target_sources(app PRIVATE "../test/keys.c")
 target_sources(app PRIVATE "../test/sub_unit_test.c")
+
+# For the mbedtls configuration file
+zephyr_include_directories("${dps_src_dir}/zephyr")

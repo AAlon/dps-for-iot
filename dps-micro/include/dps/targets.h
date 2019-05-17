@@ -114,22 +114,6 @@ static inline char* strndup(const char* str, size_t maxLen)
     return c;
 }
 
-static inline size_t strcspn(const char* str1, const char* str2)
-{
-    const char* s1 = str1;
-    while (*s1) {
-        const char* s2 = str2;
-        while (*s2) {
-            if (*s1 == *s2) {
-                goto Exit;
-            }
-            ++s2;
-        }
-        ++s1;
-    }
-Exit:
-    return s1 - str1;
-}
 #else
 
 #error "Unsupported target"

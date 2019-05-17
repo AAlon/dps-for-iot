@@ -1,12 +1,7 @@
-/**
- * @file
- * 
- */
-
 /*
  *******************************************************************
  *
- * Copyright 2018 Intel Corporation All rights reserved.
+ * Copyright 2019 Intel Corporation All rights reserved.
  *
  *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  *
@@ -25,34 +20,45 @@
  *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 
-#include <assert.h>
-#include <stdio.h>
-#include <zephyr.h>
-#include <entropy.h>
+#include <posix/time.h>
+#include <errno.h>
+#include <dps/private/timer.h>
 
-#include "mbedtls/entropy.h"
-#include <dps/err.h>
-#include <dps/dbg.h>
+struct _DPS_Timer {
+    DPS_TimeoutCallback cb;
+    void* data;
+};
 
-/*
- * Debug control for this module
- */
-DPS_DEBUG_CONTROL(DPS_DEBUG_ON);
-
-int mbedtls_hardware_poll(void* data, unsigned char* output, size_t len, size_t* olen)
+DPS_Timer* DPS_TimerSet(uint16_t timeout, DPS_TimeoutCallback cb, void* data)
 {
-    struct device *dev = device_get_binding(CONFIG_ENTROPY_NAME);
-    int ret;
+    return NULL;
+}
 
-	if (!dev) {
-		DPS_ERRPRINT("Could not get entropy device\n");
-		return 1;
-	}
-    ret = entropy_get_entropy(dev, output, len);
-    if (ret) {
-		DPS_ERRPRINT("Could not get entropy\n");
-        return 1;
+DPS_Status DPS_TimerReset(DPS_Timer* timer, uint16_t timeout)
+{
+    if (!timer) {
+        return DPS_ERR_NULL;
     }
-    *olen = len;
+    return DPS_OK;
+}
+
+DPS_Status DPS_TimerCancel(DPS_Timer* timer)
+{
+    if (!timer) {
+        return DPS_ERR_NULL;
+    }
+    return DPS_OK;
+}
+
+int _gettimeofday(struct timeval *tv, const void *tz)
+{
+    struct timespec ts;
+    if (!tv) {
+        errno = EFAULT;
+        return -1;
+    }
+    clock_gettime(CLOCK_REALTIME, &ts);
+    tv->tv_sec = ts.tv_sec;
+    tv->tv_usec = ts.tv_nsec / 1000;
     return 0;
 }

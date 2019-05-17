@@ -22,7 +22,6 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <math.h>
 #include <float.h>
 #include <assert.h>
 #include <dps/dbg.h>

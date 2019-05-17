@@ -20,8 +20,6 @@
  *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 
-#include <string.h>
-#include <memory.h>
 #include <dps/private/sha2.h>
 #include <mbedtls/md.h>
 

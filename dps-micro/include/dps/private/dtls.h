@@ -29,10 +29,6 @@
 #define _DPS_DTLS_H
 
 #include <stdint.h>
-#include <dps/err.h>
-#include <dps/private/timer.h>
-#include <dps/private/network.h>
-#include <dps/private/node.h>
 #include "mbedtls/config.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/debug.h"
@@ -41,6 +37,11 @@
 #include "mbedtls/ssl.h"
 #include "mbedtls/ssl_cache.h"
 #include "mbedtls/ssl_cookie.h"
+
+#include <dps/err.h>
+#include <dps/private/timer.h>
+#include <dps/private/network.h>
+#include <dps/private/node.h>
 
 
 #ifdef __cplusplus
